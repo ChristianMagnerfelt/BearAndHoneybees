@@ -4,4 +4,4 @@ debug: bear_honeybees.cpp
 release: bear_honeybees.cpp
 	g++ -Wall -Wextra -O3 -o BearHoneybees bear_honeybees.cpp -lpthread -std=c++0x
 clean:
-	rm HungryBirds
+	rm BearHoneybees

@@ -17,7 +17,6 @@
 const bool IS_SHARED = 1;
 const std::size_t MAX_HONEYBEES = 100;
 const std::size_t MAX_HONEY = 100;
-const std::size_t HONEYBEE_SLEEP_TIME = 20;
 
 std::size_t g_numHoneybees;
 std::size_t g_numHoney;
@@ -32,7 +31,7 @@ std::vector<int> g_pot;
 sem_t mutex;
 
 /*
- *	\params	argv	{ program name } { number of baby birds } { number of HONEY }
+ *	\params	argv	{ program name } { number of honeybees } { amount of honey }
  */
 int main(int argc, const char * argv[])
 {
@@ -72,16 +71,16 @@ int main(int argc, const char * argv[])
 	sem_init(&empty, IS_SHARED, g_numHoney);
 	sem_init(&mutex, IS_SHARED, 1);
 	
-	// Fills pot with HONEY
+	// Fills pot with honey
 	g_pot.reserve(g_numHoney);
 	
 	// Init workers
 	std::vector<pthread_t> workers(g_numHoneybees + 1);
 	
-	// Create parent bird worker thread
+	// Create bear worker thread
 	pthread_create(&workers[0], &attr, bear, reinterpret_cast<void*>(0));
 	
-	// Create baby bird worker threads
+	// Create honeybee worker threads
 	for(std::size_t i = 1; i < workers.size(); ++i)
 	{
 		pthread_create(&workers[i], &attr, honeyBee, reinterpret_cast<void*>(i));
@@ -95,14 +94,14 @@ int main(int argc, const char * argv[])
 	return 0;
 }
 /*
- *	\brief	Fills pot with honey
+ *	\brief	Eat honey from pot
  */
 void * bear(void * param)
 {
 	std::size_t id = reinterpret_cast<std::size_t>(param);
 	while(true)
 	{
-		// Sleep until pot is empty
+		// Wait until pot is full
 		sem_wait(&full);
 		
 		// Mutal exclusion on shared resource pot
@@ -111,7 +110,7 @@ void * bear(void * param)
 		std::cout << "Bear " << id << " : Ate " << g_numHoney << " amount of Honey" << std::endl; 	
 		sem_post(&mutex);
 		
-		// Signal baby birds that pot is ready
+		// Signal honeybees that pot is empty
 		for(std::size_t i = 0; i < g_numHoney; ++i)
 		{
 			sem_post(&empty);
@@ -120,22 +119,23 @@ void * bear(void * param)
 	return 0;
 }
 /*
- *	\brief	Eats honey from pot
+ *	\brief	Fills pot with honey
  */
 void * honeyBee(void * param)
 {
 	std::size_t id = reinterpret_cast<std::size_t>(param);
 	while(true)	
 	{
-		// Wait until pot have at least 1 worm
+		// Wait until the pot is empty
 		sem_wait(&empty);
 		
 		// Mutal exclusion on shared resource pot
 		sem_wait(&mutex);
 	
-		g_pot.push_back(rand() % 10);	// Add honey with random quility ( Symbolic )
+		g_pot.push_back(rand() % 10);	// Add honey with random quality ( Symbolic )
 		std::cout << "honeyBee " << id << " : added one unit of honey to the pot" << std::endl;
 		
+		// Signal bear if pot is full
 		if(g_pot.size() == g_numHoney)
 		{
 			sem_post(&full);
