@@ -119,7 +119,16 @@ void * bear(void * param)
 	return 0;
 }
 /*
- *	\brief	Fills pot with honey
+ *	\brief			Fills pot with honey
+ *	\description	Fairness: Note that only a limited number of bees can access
+ *					the pot at one time. If the scheduling of the waiting threads 
+ *					in the semaphore is not fair, it may mean that some bees may 
+ *					not end up accessing the pot at all. 
+ *					Of course we can influence the scheduling policy of the OS
+ *					by setting the scope with the pthreads API. However this does not 
+ *					change how the semaphores schedule its threads. This is implementation 
+ *					dependent. In order to acheive true fairness the semaphore would 
+ *					have to implement some kind of FIFO queue.
  */
 void * honeyBee(void * param)
 {
